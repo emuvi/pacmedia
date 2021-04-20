@@ -1,13 +1,36 @@
 package main
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 )
+
+var foldersToClean []string
+
+func doFeed() {
+	sts, err := os.Stat(feedParam)
+	if os.IsNotExist(err) {
+		fmt.Println("Feeding: " + feedParam + "\nError: The path does not exists." + "\n-------")
+		return
+	}
+	if sts.IsDir() {
+		feedFolder(feedParam)
+	} else {
+		waiter.Add(1)
+		go feedFile(feedParam)
+	}
+	waiter.Wait()
+	if cleanParam {
+		for _, folder := range foldersToClean {
+			os.Remove(folder)
+		}
+	}
+}
 
 func feedFolder(folder string) {
 	fmt.Println("Feeding: " + folder + "\nStarting..." + "\n-------")
@@ -26,7 +49,7 @@ func feedFolder(folder string) {
 		}
 	}
 	if cleanParam {
-		os.Remove(folder)
+		foldersToClean = append(foldersToClean, folder)
 	}
 }
 
@@ -47,12 +70,18 @@ func feedFile(origin string) {
 		fmt.Println("Feeding: " + origin + "\nError: The file is empty." + "\n-------")
 		return
 	}
-	data, err := ioutil.ReadFile(origin)
+	file, err := os.Open(origin)
 	if err != nil {
 		fmt.Println("Feeding: " + origin + "\nError: " + err.Error() + "\n-------")
 		return
 	}
-	check := fmt.Sprintf("%x", md5.Sum(data))
+	hash := sha256.New()
+	_, err = io.Copy(hash, file)
+	if err != nil {
+		fmt.Println("Feeding: " + origin + "\nError: " + err.Error() + "\n-------")
+		return
+	}
+	check := fmt.Sprintf("%x", hash.Sum(nil))
 	root := path.Join(bodyParam, check[0:2], check[2:4])
 	destiny := path.Join(root, check+path.Ext(origin))
 	fmt.Println("Feeding: " + origin + "\nDestiny: " + destiny + "\n-------")
@@ -69,18 +98,4 @@ func feedFile(origin string) {
 		return
 	}
 	fmt.Println("Feeding: " + origin + "\nResult: Successfully eaten." + "\n-------")
-}
-
-func doFeed() {
-	sts, err := os.Stat(feedParam)
-	if os.IsNotExist(err) {
-		fmt.Println("Feeding: " + feedParam + "\nError: The path does not exists." + "\n-------")
-		return
-	}
-	if sts.IsDir() {
-		feedFolder(feedParam)
-	} else {
-		waiter.Add(1)
-		go feedFile(feedParam)
-	}
 }

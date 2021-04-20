@@ -73,27 +73,21 @@ func main() {
 
 	if feedParam != "" {
 		doFeed()
-		waiter.Wait()
 	}
 	if digestParam {
 		doDigest()
-		waiter.Wait()
 	}
 	if searchParam != "" {
 		doSearch()
-		waiter.Wait()
 	}
 	if lendParam != "" {
 		doLend()
-		waiter.Wait()
 	}
 	if giveParam != "" {
 		doGive()
-		waiter.Wait()
 	}
 	if openParam {
 		doOpen()
-		waiter.Wait()
 	}
 	fmt.Println("Pacmedia finished this round.")
 }

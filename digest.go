@@ -14,6 +14,7 @@ import (
 
 func doDigest() {
 	digestFolder(bodyParam)
+	waiter.Wait()
 }
 
 func digestFolder(folder string) {
