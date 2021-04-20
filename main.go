@@ -10,16 +10,16 @@ import (
 )
 
 var (
-	body   = ""
-	feed   = ""
-	clean  = false
-	digest = false
-	search = ""
-	give   = ""
-	lend   = ""
-	open   = false
-	speed  = 8
-	help   = false
+	bodyParam   = ""
+	feedParam   = ""
+	cleanParam  = false
+	digestParam = false
+	searchParam = ""
+	giveParam   = ""
+	lendParam   = ""
+	openParam   = false
+	speedParam  = 8
+	helpParam   = false
 )
 
 var waiter sync.WaitGroup
@@ -33,65 +33,65 @@ var enabledTypes = map[string]bool{
 }
 
 func main() {
-	getopt.FlagLong(&body, "body", 'b', "Where all files I eat ends up.")
-	getopt.FlagLong(&feed, "feed", 'f', "Yami! More files for me to eat.")
-	getopt.FlagLong(&clean, "clean", 'c', "Removes the folders after eating in them.")
-	getopt.FlagLong(&digest, "digest", 'd', "This makes the food in my belly becomes my body.")
-	getopt.FlagLong(&search, "search", 's', "Do you wanna me to search in my body and belly?")
-	getopt.FlagLong(&lend, "lend", 'l', "This copies the founds inside me on the destination.")
-	getopt.FlagLong(&give, "give", 'g', "This moves the founds out of me to the destination.")
-	getopt.FlagLong(&open, "open", 'o', "This opens the founds inside me.")
-	getopt.FlagLong(&speed, "speed", 'e', "How fast I should go.")
-	getopt.FlagLong(&help, "help", 'h', "Makes this conversation.")
+	getopt.FlagLong(&bodyParam, "body", 'b', "Where all files I eat ends up.")
+	getopt.FlagLong(&feedParam, "feed", 'f', "Yami! More files for me to eat.")
+	getopt.FlagLong(&cleanParam, "clean", 'c', "Removes the folders after eating in them.")
+	getopt.FlagLong(&digestParam, "digest", 'd', "This makes the food in my belly becomes my body.")
+	getopt.FlagLong(&searchParam, "search", 's', "Do you wanna me to search in my body and belly?")
+	getopt.FlagLong(&lendParam, "lend", 'l', "This copies the founds inside me on the destination.")
+	getopt.FlagLong(&giveParam, "give", 'g', "This moves the founds out of me to the destination.")
+	getopt.FlagLong(&openParam, "open", 'o', "This opens the founds inside me.")
+	getopt.FlagLong(&speedParam, "speed", 'e', "How fast I should go.")
+	getopt.FlagLong(&helpParam, "help", 'h', "Makes this conversation.")
 
 	getopt.Parse()
-	if help {
+	if helpParam {
 		fmt.Println("PacMedia - Eats all the files you feed and keeps them organized,")
 		fmt.Println("first in the belly, after in the body, for future searchs.")
 		getopt.Usage()
 		return
 	}
 
-	if body == "" {
-		body = "./pacbody"
+	if bodyParam == "" {
+		bodyParam = "./pacbody"
 	}
-	sts, err := os.Stat(body)
+	sts, err := os.Stat(bodyParam)
 	if os.IsNotExist(err) {
-		fmt.Println("My body does not exists on: " + body)
-		body = ""
+		fmt.Println("My body does not exists on: " + bodyParam)
+		bodyParam = ""
 	} else if !sts.IsDir() {
-		fmt.Println("My body is not a directory on: " + body)
-		body = ""
+		fmt.Println("My body is not a directory on: " + bodyParam)
+		bodyParam = ""
 	}
-	if body == "" {
+	if bodyParam == "" {
 		panic("You let me as an errant soul, where is my body?")
 	}
 
-	fmt.Println("Body:", body)
-	fmt.Println("Speed:", speed)
-	runtime.GOMAXPROCS(speed)
+	fmt.Println("Body:", bodyParam)
+	fmt.Println("Speed:", speedParam)
+	runtime.GOMAXPROCS(speedParam)
 
-	if feed != "" {
+	if feedParam != "" {
 		doFeed()
 		waiter.Wait()
 	}
-	if digest {
+	if digestParam {
 		doDigest()
 		waiter.Wait()
 	}
-	if search != "" {
+	if searchParam != "" {
 		doSearch()
 		waiter.Wait()
 	}
-	if lend != "" {
+	if lendParam != "" {
 		doLend()
 		waiter.Wait()
 	}
-	if give != "" {
+	if giveParam != "" {
 		doGive()
 		waiter.Wait()
 	}
-	if open {
+	if openParam {
 		doOpen()
 		waiter.Wait()
 	}

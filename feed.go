@@ -25,7 +25,7 @@ func feedFolder(folder string) {
 			go feedFile(doing)
 		}
 	}
-	if clean {
+	if cleanParam {
 		os.Remove(folder)
 	}
 }
@@ -53,7 +53,7 @@ func feedFile(origin string) {
 		return
 	}
 	check := fmt.Sprintf("%x", md5.Sum(data))
-	root := path.Join(body, check[0:2], check[2:4])
+	root := path.Join(bodyParam, check[0:2], check[2:4])
 	destiny := path.Join(root, check+path.Ext(origin))
 	fmt.Println("Feeding: " + origin + "\nDestiny: " + destiny + "\n-------")
 	_, err = os.Stat(destiny)
@@ -72,15 +72,15 @@ func feedFile(origin string) {
 }
 
 func doFeed() {
-	sts, err := os.Stat(feed)
+	sts, err := os.Stat(feedParam)
 	if os.IsNotExist(err) {
-		fmt.Println("Feeding: " + feed + "\nError: The path does not exists." + "\n-------")
+		fmt.Println("Feeding: " + feedParam + "\nError: The path does not exists." + "\n-------")
 		return
 	}
 	if sts.IsDir() {
-		feedFolder(feed)
+		feedFolder(feedParam)
 	} else {
 		waiter.Add(1)
-		go feedFile(feed)
+		go feedFile(feedParam)
 	}
 }

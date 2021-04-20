@@ -13,7 +13,7 @@ import (
 )
 
 func doDigest() {
-	digestFolder(body)
+	digestFolder(bodyParam)
 }
 
 func digestFolder(folder string) {
