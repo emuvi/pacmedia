@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync"
 
 	"github.com/pborman/getopt/v2"
 )
@@ -20,6 +21,16 @@ var (
 	speed  = 8
 	help   = false
 )
+
+var waiter sync.WaitGroup
+
+var enabledTypes = map[string]bool{
+	".pdf": true, ".pdb": true,
+	".epub": true, ".htmlz": true,
+	".mobi": true, ".azw3": true,
+	".rtf": true, ".odt": true,
+	".doc": true, ".docx": true,
+}
 
 func main() {
 	getopt.FlagLong(&body, "body", 'b', "Where all files I eat ends up.")
@@ -42,12 +53,16 @@ func main() {
 	}
 
 	if body == "" {
-		sts, err := os.Stat("./pacbody")
-		if err == nil && sts.IsDir() {
-			body = "./pacbody"
-		}
+		body = "./pacbody"
 	}
-
+	sts, err := os.Stat(body)
+	if os.IsNotExist(err) {
+		fmt.Println("My body does not exists on: " + body)
+		body = ""
+	} else if !sts.IsDir() {
+		fmt.Println("My body is not a directory on: " + body)
+		body = ""
+	}
 	if body == "" {
 		panic("You let me as an errant soul, where is my body?")
 	}
@@ -58,20 +73,27 @@ func main() {
 
 	if feed != "" {
 		doFeed()
+		waiter.Wait()
 	}
 	if digest {
 		doDigest()
+		waiter.Wait()
 	}
 	if search != "" {
 		doSearch()
+		waiter.Wait()
 	}
 	if lend != "" {
 		doLend()
+		waiter.Wait()
 	}
 	if give != "" {
 		doGive()
+		waiter.Wait()
 	}
 	if open {
 		doOpen()
+		waiter.Wait()
 	}
+	fmt.Println("Pacmedia finished this round.")
 }
