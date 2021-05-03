@@ -13,6 +13,15 @@ import (
 var foldersToClean []string
 
 func doFeed() {
+	feedParam = fixPath(feedParam)
+	if strings.HasPrefix(bodyParam, feedParam) {
+		fmt.Println("Feeding: " + feedParam + "\nError: The body can't be inside the feed." + "\n-------")
+		return
+	}
+	if strings.HasPrefix(feedParam, bodyParam) {
+		fmt.Println("Feeding: " + feedParam + "\nError: The feed can't be inside the body." + "\n-------")
+		return
+	}
 	sts, err := os.Stat(feedParam)
 	if os.IsNotExist(err) {
 		fmt.Println("Feeding: " + feedParam + "\nError: The path does not exists." + "\n-------")

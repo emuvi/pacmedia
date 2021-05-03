@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	recordParam = false
 	bodyParam   = ""
 	feedParam   = ""
 	cleanParam  = false
@@ -20,6 +21,7 @@ var (
 	openParam   = false
 	speedParam  = 8
 	helpParam   = false
+	versParam   = false
 )
 
 var waiter sync.WaitGroup
@@ -33,6 +35,7 @@ var enabledTypes = map[string]bool{
 }
 
 func main() {
+	getopt.FlagLong(&recordParam, "rec", 'r', "Records all the logs.") // TODO Record logs.
 	getopt.FlagLong(&bodyParam, "body", 'b', "Where all files I eat ends up.")
 	getopt.FlagLong(&feedParam, "feed", 'f', "Yami! More files for me to eat.")
 	getopt.FlagLong(&cleanParam, "clean", 'c', "Removes the folders after eating in them.")
@@ -43,12 +46,17 @@ func main() {
 	getopt.FlagLong(&openParam, "open", 'o', "This opens the founds inside me.")
 	getopt.FlagLong(&speedParam, "speed", 'e', "How fast I should go.")
 	getopt.FlagLong(&helpParam, "help", 'h', "Makes this conversation.")
+	getopt.FlagLong(&versParam, "version", 'v', "Show the current version.")
 
 	getopt.Parse()
 	if helpParam {
 		fmt.Println("PacMedia - Eats all the files you feed and keeps them organized,")
 		fmt.Println("first in the belly, after in the body, for future searchs.")
 		getopt.Usage()
+		return
+	}
+	if versParam {
+		fmt.Println("PacMedia - Version: 0.1.5")
 		return
 	}
 
@@ -66,6 +74,7 @@ func main() {
 	if bodyParam == "" {
 		panic("You let me as an errant soul, where is my body?")
 	}
+	bodyParam = fixPath(bodyParam)
 
 	fmt.Println("Body:", bodyParam)
 	fmt.Println("Speed:", speedParam)
