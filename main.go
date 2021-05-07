@@ -8,7 +8,7 @@ import (
 	"github.com/pborman/getopt/v2"
 )
 
-const appVersion = "0.1.13"
+const appVersion = "0.1.14"
 
 var (
 	recordParam = false

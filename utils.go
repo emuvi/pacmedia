@@ -15,9 +15,7 @@ import (
 
 var logFile *os.File
 var logWriter *csv.Writer
-var logChan chan []string
-var logSendWaiter *sync.WaitGroup
-var logWriterWaiter *sync.WaitGroup
+var logMutex *sync.Mutex
 
 func startLogWriter() {
 	logFolder := path.Join(bodyParam, "(logs)")
@@ -28,40 +26,20 @@ func startLogWriter() {
 		panic(err)
 	}
 	logWriter = csv.NewWriter(logFile)
-	logChan = make(chan []string, 10*speedParam)
-	logSendWaiter = &sync.WaitGroup{}
-	logWriterWaiter = &sync.WaitGroup{}
-	logWriterWaiter.Add(1)
-	go writeLog()
-}
-
-func writeLog() {
-	defer logWriterWaiter.Done()
-	for lines := range logChan {
-		logWriter.Write(lines)
-	}
+	logMutex = &sync.Mutex{}
 }
 
 func closeLogWriter() {
-	fmt.Println("Closing Log Writer...")
-	logSendWaiter.Wait()
-	close(logChan)
-	logWriterWaiter.Wait()
 	logWriter.Flush()
 	logFile.Close()
-	fmt.Println("Closed Log Writer.")
-}
-
-func sendToWrite(lines ...string) {
-	logChan <- lines
-	logSendWaiter.Done()
 }
 
 func pacLog(lines ...string) {
 	lines = append([]string{time.Now().Format("15-04-05.000")}, lines...)
 	if recordParam {
-		logSendWaiter.Add(1)
-		go sendToWrite(lines...)
+		logMutex.Lock()
+		logWriter.Write(lines)
+		logMutex.Unlock()
 	}
 	lines = append(lines, "----------------")
 	fmt.Println(strings.Join(lines, "\n"))
