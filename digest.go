@@ -9,12 +9,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 )
 
+var digestWaiter *sync.WaitGroup
+
 func doDigest() {
 	digestFolder(bodyParam)
-	waiter.Wait()
+	digestWaiter.Wait()
 }
 
 func digestFolder(folder string) {
@@ -29,14 +32,14 @@ func digestFolder(folder string) {
 		if inside.IsDir() {
 			digestFolder(doing)
 		} else {
-			waiter.Add(1)
+			digestWaiter.Add(1)
 			go digestFile(doing)
 		}
 	}
 }
 
 func digestFile(origin string) {
-	defer waiter.Done()
+	defer digestWaiter.Done()
 	extension := path.Ext(origin)
 	exType := strings.TrimSpace(strings.ToLower(extension))
 	if !enabledTypes[exType] {

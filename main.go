@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
-	"sync"
+	"strconv"
 
 	"github.com/pborman/getopt/v2"
 )
+
+const appVersion = "0.1.12"
 
 var (
 	recordParam = false
@@ -24,8 +25,6 @@ var (
 	versParam   = false
 )
 
-var waiter sync.WaitGroup
-
 var enabledTypes = map[string]bool{
 	".pdf": true, ".pdb": true,
 	".epub": true, ".htmlz": true,
@@ -35,7 +34,7 @@ var enabledTypes = map[string]bool{
 }
 
 func main() {
-	getopt.FlagLong(&recordParam, "rec", 'r', "Records all the logs.") // TODO Record logs.
+	getopt.FlagLong(&recordParam, "record", 'r', "Records all the logs.")
 	getopt.FlagLong(&bodyParam, "body", 'b', "Where all files I eat ends up.")
 	getopt.FlagLong(&feedParam, "feed", 'f', "Yami! More files for me to eat.")
 	getopt.FlagLong(&cleanParam, "clean", 'c', "Removes the folders after eating in them.")
@@ -47,8 +46,8 @@ func main() {
 	getopt.FlagLong(&speedParam, "speed", 'e', "How fast I should go.")
 	getopt.FlagLong(&helpParam, "help", 'h', "Makes this conversation.")
 	getopt.FlagLong(&versParam, "version", 'v', "Show the current version.")
-
 	getopt.Parse()
+
 	if helpParam {
 		fmt.Println("PacMedia - Eats all the files you feed and keeps them organized,")
 		fmt.Println("first in the belly, after in the body, for future searchs.")
@@ -56,30 +55,35 @@ func main() {
 		return
 	}
 	if versParam {
-		fmt.Println("PacMedia - Version: 0.1.5")
+		fmt.Println("PacMedia - Version: " + appVersion)
 		return
 	}
 
+	if bodyParam == "" {
+		bodyParam = os.Getenv("PACBODY")
+	}
 	if bodyParam == "" {
 		bodyParam = "./pacbody"
 	}
 	sts, err := os.Stat(bodyParam)
 	if os.IsNotExist(err) {
-		fmt.Println("My body does not exists on: " + bodyParam)
+		fmt.Println("Error: My body does not exists on: " + bodyParam)
 		bodyParam = ""
 	} else if !sts.IsDir() {
-		fmt.Println("My body is not a directory on: " + bodyParam)
+		fmt.Println("Error: My body is not a directory on: " + bodyParam)
 		bodyParam = ""
 	}
 	if bodyParam == "" {
-		panic("You let me as an errant soul, where is my body?")
+		fmt.Println("Question: You let me as an errant soul, where is my body?")
+		return
+	}
+
+	if recordParam {
+		startLogWriter()
+		defer closeLogWriter()
 	}
 	bodyParam = fixPath(bodyParam)
-
-	fmt.Println("Body:", bodyParam)
-	fmt.Println("Speed:", speedParam)
-	runtime.GOMAXPROCS(speedParam)
-
+	pacLog("Body: "+bodyParam, "Speed: "+strconv.Itoa(speedParam), "Version: "+appVersion)
 	if feedParam != "" {
 		doFeed()
 	}
@@ -98,5 +102,5 @@ func main() {
 	if openParam {
 		doOpen()
 	}
-	fmt.Println("Pacmedia finished this round.")
+	pacLog("Info: Pacmedia finished this round.")
 }
