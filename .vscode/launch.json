@@ -5,12 +5,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch file",
+      "name": "Launch",
       "type": "go",
       "request": "launch",
-      "args": ["-h"],
-      "mode": "debug",
-      "program": "${workspaceFolder}/main.go"
+      "args": ["-rc", "-b", "~/Downloads/body", "-f", "~/Downloads/tmp"],
+      "mode": "auto",
+      "program": "${workspaceFolder}"
     }
   ]
 }

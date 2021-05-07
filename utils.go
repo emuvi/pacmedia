@@ -14,9 +14,10 @@ import (
 )
 
 var logFile *os.File
-var csvWriter *csv.Writer
+var logWriter *csv.Writer
 var logChan chan []string
-var logWaiter *sync.WaitGroup
+var logSendWaiter *sync.WaitGroup
+var logWriterWaiter *sync.WaitGroup
 
 func startLogWriter() {
 	logFolder := path.Join(bodyParam, "(logs)")
@@ -26,36 +27,40 @@ func startLogWriter() {
 	if err != nil {
 		panic(err)
 	}
-	csvWriter = csv.NewWriter(logFile)
-	logChan = make(chan []string, 4*speedParam)
-	logWaiter = &sync.WaitGroup{}
-	logWaiter.Add(1)
+	logWriter = csv.NewWriter(logFile)
+	logChan = make(chan []string, 10*speedParam)
+	logSendWaiter = &sync.WaitGroup{}
+	logWriterWaiter = &sync.WaitGroup{}
+	logWriterWaiter.Add(1)
 	go writeLog()
 }
 
 func writeLog() {
-	defer logWaiter.Done()
+	defer logWriterWaiter.Done()
 	for lines := range logChan {
-		csvWriter.Write(lines)
+		logWriter.Write(lines)
 	}
 }
 
 func closeLogWriter() {
 	fmt.Println("Closing Log Writer...")
+	logSendWaiter.Wait()
 	close(logChan)
-	logWaiter.Wait()
-	csvWriter.Flush()
+	logWriterWaiter.Wait()
+	logWriter.Flush()
 	logFile.Close()
 	fmt.Println("Closed Log Writer.")
 }
 
 func sendToWrite(lines ...string) {
 	logChan <- lines
+	logSendWaiter.Done()
 }
 
 func pacLog(lines ...string) {
 	lines = append([]string{time.Now().Format("15-04-05.000")}, lines...)
 	if recordParam {
+		logSendWaiter.Add(1)
 		go sendToWrite(lines...)
 	}
 	lines = append(lines, "----------------")
@@ -67,11 +72,21 @@ func fixPath(pathToFix string) string {
 	if path.IsAbs(pathToFix) {
 		return pathToFix
 	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return pathToFix
+	homeDirInitial := "~" + string(os.PathSeparator)
+	if strings.HasPrefix(pathToFix, homeDirInitial) {
+		uhd, err := os.UserHomeDir()
+		if err != nil {
+			return pathToFix
+		}
+		pathToFix = strings.TrimPrefix(pathToFix, homeDirInitial)
+		return path.Join(uhd, pathToFix)
+	} else {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return pathToFix
+		}
+		return path.Join(cwd, pathToFix)
 	}
-	return path.Join(cwd, pathToFix)
 }
 
 func includeInName(ofFile string, theName string) {

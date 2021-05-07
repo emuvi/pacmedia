@@ -14,7 +14,7 @@ import (
 )
 
 var feedWaiter *sync.WaitGroup
-var feedParamCount int
+var feedParamLength int
 var feedSuccess uint32
 var feedDuplicate uint32
 var feedError uint32
@@ -23,6 +23,7 @@ var foldersToClean []string
 
 func doFeed() {
 	feedParam = fixPath(feedParam)
+	pacLog("Feeding: "+feedParam, "Feed Starting...")
 	if strings.HasPrefix(bodyParam, feedParam) {
 		pacLog("Feeding: "+feedParam, "Error: The body can't be inside the feed.")
 		return
@@ -36,7 +37,7 @@ func doFeed() {
 		pacLog("Feeding: "+feedParam, "Error: The path does not exists.")
 		return
 	}
-	feedParamCount = len(feedParam)
+	feedParamLength = len(feedParam)
 	feedWaiter = &sync.WaitGroup{}
 	feedSuccess = 0
 	feedDuplicate = 0
@@ -66,7 +67,7 @@ func doFeed() {
 }
 
 func feedFolder(folder string) {
-	display := "[f]" + folder[feedParamCount:]
+	display := "[f]" + folder[feedParamLength:]
 	pacLog("Feeding: "+display, "Folder Starting...")
 	files, err := ioutil.ReadDir(folder)
 	if err != nil {
@@ -89,7 +90,7 @@ func feedFolder(folder string) {
 func feedFile() {
 	defer feedWaiter.Done()
 	for origin := range filesToFeed {
-		display := "[f]" + origin[feedParamCount:]
+		display := "[f]" + origin[feedParamLength:]
 		pacLog("Feeding: "+display, "File Starting...")
 		exType := strings.TrimSpace(strings.ToLower(path.Ext(origin)))
 		if !enabledTypes[exType] {
@@ -150,6 +151,14 @@ func feedFile() {
 				"Error: This file is already on my belly.")
 			atomic.AddUint32(&feedDuplicate, 1)
 			return
+		}
+		if cleanParam {
+			doing := path.Dir(origin)
+			err = os.Remove(doing)
+			for err == nil && len(doing) > feedParamLength {
+				doing = path.Dir(doing)
+				err = os.Remove(doing)
+			}
 		}
 		pacLog("Feeding: "+display, "Checker: "+check, "Success!")
 		atomic.AddUint32(&feedSuccess, 1)

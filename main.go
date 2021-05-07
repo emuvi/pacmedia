@@ -8,7 +8,7 @@ import (
 	"github.com/pborman/getopt/v2"
 )
 
-const appVersion = "0.1.12"
+const appVersion = "0.1.13"
 
 var (
 	recordParam = false
@@ -65,6 +65,7 @@ func main() {
 	if bodyParam == "" {
 		bodyParam = "./pacbody"
 	}
+	bodyParam = fixPath(bodyParam)
 	sts, err := os.Stat(bodyParam)
 	if os.IsNotExist(err) {
 		fmt.Println("Error: My body does not exists on: " + bodyParam)
@@ -82,7 +83,6 @@ func main() {
 		startLogWriter()
 		defer closeLogWriter()
 	}
-	bodyParam = fixPath(bodyParam)
 	pacLog("Body: "+bodyParam, "Speed: "+strconv.Itoa(speedParam), "Version: "+appVersion)
 	if feedParam != "" {
 		doFeed()
